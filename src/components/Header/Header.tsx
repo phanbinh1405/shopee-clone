@@ -1,43 +1,37 @@
 import { Link } from 'react-router-dom'
-import {
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  useFloating,
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  FloatingPortal
-} from '@floating-ui/react'
-import { useState } from 'react'
+import Popover from '../Popover'
+import { useMutation } from '@tanstack/react-query'
+import { logout } from 'src/apis/auth.api'
+import { useContext } from 'react'
+import { AppContext } from 'src/contexts/app.context'
 
 function Header() {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const { x, y, strategy, refs, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    middleware: [offset(10), flip(), shift()],
-    whileElementsMounted: autoUpdate
+  const { setIsAuthenticated, isAuthenticated } = useContext(AppContext)
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      setIsAuthenticated(false)
+    }
   })
-  const hover = useHover(context, { move: false })
-  const focus = useFocus(context)
-  const dismiss = useDismiss(context)
-  const role = useRole(context, { role: 'tooltip' })
 
-  // Merge all the interactions into prop getters
-  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss, role])
+  const handleLogout = () => {
+    logoutMutation.mutate()
+  }
   return (
     <div className='bg-gradient-to-b from-[#f53d2d] to-[#f63] pb-5 pt-2 text-white'>
       <div className='container'>
         <div className='flex justify-end'>
-          <div
+          <Popover
+            as='span'
             className='flex cursor-pointer items-center py-1 hover:text-gray-300'
-            ref={refs.setReference}
-            {...getReferenceProps()}
+            renderPopover={
+              <div className='relative rounded-sm border border-gray-200 bg-white shadow-md'>
+                <div className='px flex flex-col py-2 px-3'>
+                  <button className='py-2 px-3 hover:text-orange'>Tiếng Việt</button>
+                  <button className='py-2 px-3 hover:text-orange'>English</button>
+                </div>
+              </div>
+            }
           >
             <svg
               xmlns='http://www.w3.org/2000/svg'
@@ -64,39 +58,49 @@ function Header() {
             >
               <path strokeLinecap='round' strokeLinejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' />
             </svg>
-            <FloatingPortal>
-              {isOpen && (
-                <div
-                  ref={refs.setFloating}
-                  style={{
-                    position: strategy,
-                    top: y ?? 0,
-                    left: x ?? 0,
-                    width: 'max-content'
-                  }}
-                  {...getFloatingProps()}
-                >
-                  <div className='relative rounded-sm border border-gray-200 bg-white shadow-md'>
-                    <div className='px flex flex-col py-2 px-3'>
-                      <button className='py-2 px-3 hover:text-orange'>Tiếng Việt</button>
-                      <button className='py-2 px-3 hover:text-orange'>English</button>
-                    </div>
+          </Popover>
+
+          {!isAuthenticated ? (
+            <div className='flex items-center'>
+              <Link to='/register' className='mx-3 capitalize hover:text-white/70'>
+                Đăng ký
+              </Link>
+              <div className='h-4 border-r-[1px] border-r-white/40' />
+              <Link to='/login' className='mx-3 capitalize hover:text-white/70'>
+                Đăng nhập
+              </Link>
+            </div>
+          ) : (
+            <Popover
+              className='ml-6 flex cursor-pointer items-center py-1 hover:text-gray-300'
+              renderPopover={
+                <div className='relative rounded-sm border border-gray-200 bg-white shadow-md'>
+                  <Link to='/' className='block bg-white py-2 px-3 hover:bg-slate-100 hover:text-cyan-500'>
+                    Tài khoản của tôi
+                  </Link>
+                  <Link to='/' className='block bg-white py-2 px-3 hover:bg-slate-100 hover:text-cyan-500'>
+                    Đơn mua
+                  </Link>
+                  <div
+                    className='block cursor-pointer bg-white py-2 px-3 hover:bg-slate-100 hover:text-cyan-500'
+                    onClick={handleLogout}
+                    role='presentation'
+                  >
+                    Đăng xuất
                   </div>
                 </div>
-              )}
-            </FloatingPortal>
-          </div>
-
-          <div className='ml-6 flex cursor-pointer items-center py-1 hover:text-gray-300'>
-            <div className='mr-2 h-5 w-5 flex-shrink-0'>
-              <img
-                src='https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80'
-                alt='avatar'
-                className='h-full w-full rounded-full object-cover'
-              />
-            </div>
-            <div>Phan Van Binh</div>
-          </div>
+              }
+            >
+              <div className='mr-2 h-5 w-5 flex-shrink-0'>
+                <img
+                  src='https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80'
+                  alt='avatar'
+                  className='h-full w-full rounded-full object-cover'
+                />
+              </div>
+              <div>Phan Van Binh</div>
+            </Popover>
+          )}
         </div>
         <div className='mt-4 grid grid-cols-12 items-end gap-4'>
           <Link to='/' className='col-span-2'>
@@ -129,23 +133,107 @@ function Header() {
               </button>
             </div>
           </form>
-          <div className='col-span-1'>
-            <Link to='#' className=''>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth={1.5}
-                stroke='currentColor'
-                className='h-8 w-8'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
-                />
-              </svg>
-            </Link>
+          <div className='col-span-1 justify-self-start'>
+            <Popover
+              renderPopover={
+                <div className='relative max-w-[400px] rounded-sm border border-gray-200 bg-white text-sm shadow-md'>
+                  <div className='p-2 capitalize text-gray-400'>Sản phẩm mới thêm</div>
+                  <div className='p-2 hover:bg-slate-100'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <img
+                          src='https://down-vn.img.susercontent.com/file/af2b11ac117ca5eedf999409fa493139_tn'
+                          alt='product'
+                          className='h-[42px] w-[42px] object-cover'
+                        />
+                      </div>
+                      <div className='ml-2 flex-grow overflow-hidden'>
+                        <div className='truncate'>Quần kaki nam nữ dài ống suông baggy DAVUBA QD002</div>
+                      </div>
+                      <div className='ml-4 flex-shrink-0'>
+                        <span className='text-orange'>đ199.000</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='p-2 hover:bg-slate-100'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <img
+                          src='https://down-vn.img.susercontent.com/file/af2b11ac117ca5eedf999409fa493139_tn'
+                          alt='product'
+                          className='h-[42px] w-[42px] object-cover'
+                        />
+                      </div>
+                      <div className='ml-2 flex-grow overflow-hidden'>
+                        <div className='truncate'>Quần kaki nam nữ dài ống suông baggy DAVUBA QD002</div>
+                      </div>
+                      <div className='ml-4 flex-shrink-0'>
+                        <span className='text-orange'>đ199.000</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='p-2 hover:bg-slate-100'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <img
+                          src='https://down-vn.img.susercontent.com/file/af2b11ac117ca5eedf999409fa493139_tn'
+                          alt='product'
+                          className='h-[42px] w-[42px] object-cover'
+                        />
+                      </div>
+                      <div className='ml-2 flex-grow overflow-hidden'>
+                        <div className='truncate'>Quần kaki nam nữ dài ống suông baggy DAVUBA QD002</div>
+                      </div>
+                      <div className='ml-4 flex-shrink-0'>
+                        <span className='text-orange'>đ199.000</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='p-2 hover:bg-slate-100'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <img
+                          src='https://down-vn.img.susercontent.com/file/af2b11ac117ca5eedf999409fa493139_tn'
+                          alt='product'
+                          className='h-[42px] w-[42px] object-cover'
+                        />
+                      </div>
+                      <div className='ml-2 flex-grow overflow-hidden'>
+                        <div className='truncate'>Quần kaki nam nữ dài ống suông baggy DAVUBA QD002</div>
+                      </div>
+                      <div className='ml-4 flex-shrink-0'>
+                        <span className='text-orange'>đ199.000</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='mt-4 flex items-center justify-between p-2'>
+                    <div className='text-xs capitalize text-gray-400'>Thêm hàng vào giỏ</div>
+                    <button className='captilize rounded-sm bg-orange px-4 py-2 text-white hover:bg-opacity-80'>
+                      Xem giỏ hàng
+                    </button>
+                  </div>
+                </div>
+              }
+              className='ml-6 flex cursor-pointer items-center py-1 hover:text-gray-300'
+            >
+              <Link to='#' className=''>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                  className='h-8 w-8'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
+                  />
+                </svg>
+              </Link>
+            </Popover>
           </div>
         </div>
       </div>
