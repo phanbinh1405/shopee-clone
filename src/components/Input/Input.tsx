@@ -22,7 +22,7 @@ export function Input({ type, rules, errorMessage, className, name, register, pl
         {...register(name, rules)}
       />
 
-      <div className='mt-1 min-h-[1rem] text-sm text-red-600'>{errorMessage}</div>
+      <div className='mt-1 min-h-[1.25rem] text-sm text-red-600'>{errorMessage}</div>
     </div>
   )
 }

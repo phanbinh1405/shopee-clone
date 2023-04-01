@@ -1,7 +1,12 @@
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation } from '@tanstack/react-query'
+import { omit } from 'lodash'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import { FormDataSchema, schema } from 'src/utils/rules'
+import { registerAccount } from 'src/apis/auth.api'
+import { ResponseApi } from 'src/types/utils.type'
+import { FormData, FormDataSchema, schema } from 'src/utils/rules'
+import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 import { Input } from '../../components/Input/Input'
 
 // type cho form data dựa trên các field truyền vào
@@ -10,19 +15,35 @@ export default function Register() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors }
   } = useForm<FormDataSchema>({ resolver: yupResolver(schema) })
 
-  //  Nhập 2 function, 1 chạy khi valid, 1 chạy khi invalid
-  const onSubmit = handleSubmit(
-    (data) => {
-      console.log(data)
-    }
-    // (data) => {
-    //   const password = getValues('password')
-    //   console.log(password)
-    // }
-  )
+  const registerAccountMutation = useMutation({
+    mutationFn: (body: Omit<FormDataSchema, 'confirm_password'>) => registerAccount(body)
+  })
+
+  //  Nhận 2 function, 1 chạy khi valid, 1 chạy khi invalid
+  const onSubmit = handleSubmit((data) => {
+    const body = omit(data, ['confirm_password'])
+    registerAccountMutation.mutate(body, {
+      onSuccess: (data) => {
+        console.log(data)
+      },
+      onError: (error) => {
+        if (isAxiosUnprocessableEntityError<ResponseApi<Omit<FormData, 'confirm_password'>>>(error)) {
+          const formError = error.response?.data.data
+          if (formError) {
+            Object.keys(formError).forEach((key) => {
+              setError(key as keyof Omit<FormData, 'confirm_password'>, {
+                message: formError[key as keyof Omit<FormData, 'confirm_password'>]
+              })
+            })
+          }
+        }
+      }
+    })
+  })
 
   return (
     <div className='bg-orange'>
@@ -46,7 +67,7 @@ export default function Register() {
                 className='mt-3'
                 errorMessage={errors.password?.message}
                 placeholder='Password'
-              />{' '}
+              />
               <Input
                 type='password'
                 name='confirm_password'

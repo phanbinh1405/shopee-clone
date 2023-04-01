@@ -5,7 +5,7 @@ type Rules = {
   [key in 'email' | 'password' | 'confirm_password']?: RegisterOptions
 }
 
-interface FormData {
+export interface FormData {
   email: string
   password: string
   confirm_password: string
@@ -91,5 +91,5 @@ export const schema = yup.object({
 export const loginSchema = schema.omit(['confirm_password'])
 
 // Create a type from schema
-export type LoginSchema = yup.InferType<typeof schema>
+export type LoginSchema = yup.InferType<typeof loginSchema>
 export type FormDataSchema = yup.InferType<typeof schema>
